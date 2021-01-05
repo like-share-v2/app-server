@@ -20,6 +20,7 @@ use App\Kernel\Payment\IPayIndia;
 use App\Kernel\Payment\JasonBagPay;
 use App\Kernel\Payment\LinkPay;
 use App\Kernel\Payment\PopModePay;
+use App\Kernel\Payment\SeproPay;
 use App\Kernel\Payment\ShineUPay;
 use App\Kernel\Payment\StepPay;
 use App\Kernel\Payment\YT2Pay;
@@ -504,6 +505,10 @@ class UserRechargeService extends Base
 
                 case 'JasonBagPay':
                     $result = $this->container->get(JasonBagPay::class)->pay($payment->pay_no, $amount);
+                    break;
+
+                case 'SeproPay':
+                    $result = $this->container->get(SeproPay::class)->pay($payment->pay_no, $amount);
                     break;
 
                 default:

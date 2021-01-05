@@ -756,4 +756,33 @@ class NotifyController extends AbstractController
 
         return 'SUCCESS';
     }
+
+    public function sepropay()
+    {
+        $params = $this->request->all();
+        if (!isset($params['tradeResult']) || !isset($params['mchOrderNo'])) {
+            return 'fail';
+        }
+
+        $this->logger('payment')->info(Json::encode($params));
+
+        try {
+            switch ($params['tradeResult']) {
+                case '1': // 支付成功
+                    $status = 2;
+                    break;
+
+                default:
+                    $status = 3;
+                    break;
+            }
+            $this->container->get(NotifyService::class)->handle($params['mchOrderNo'], $status, $params['orderNo'] ?? '', $params['merRetMsg'] ?? 'success');
+        }
+        catch (\Exception $e) {
+            $this->logger('payment')->info($e->getMessage(), $params);
+            return $e->getMessage();
+        }
+
+        return 'success';
+    }
 }
