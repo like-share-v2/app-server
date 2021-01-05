@@ -698,11 +698,10 @@ class NotifyController extends AbstractController
         if (!isset($params['orderNo']) || !isset($params['status'])) {
             return 'fail';
         }
+        $this->logger('payment')->info(Json::encode($params));
         if ($this->container->get(JasonBagPay::class)->getSign($params, env('JASON_BAG_PAY_KEY')) !== $params['sign']) {
             return 'sign error';
         }
-
-        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['status']) {
