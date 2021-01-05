@@ -785,4 +785,30 @@ class NotifyController extends AbstractController
 
         return 'success';
     }
+
+    public function sepro_payout()
+    {
+        $params = $this->request->all();
+        if (!isset($params['tradeResult']) || !isset($params['merTransferId'])) {
+            return 'fail';
+        }
+        try {
+            switch ($params['tradeResult']) {
+                case '1': // 支付成功
+                    $status = 2;
+                    break;
+
+                default: // 支付失败
+                    $status = 1;
+                    break;
+            }
+            $this->container->get(NotifyService::class)->handlePayout($params['merTransferId'], $status, (float)$params['transferAmount']);
+        }
+        catch (\Exception $e) {
+            $this->logger('payment')->error($e->getMessage(), $params);
+            return $e->getMessage();
+        }
+
+        return 'success';
+    }
 }
