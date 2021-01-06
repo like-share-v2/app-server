@@ -216,45 +216,16 @@ class UserService extends Base
      */
     public function getTeamMember(int $member_id)
     {
-        $list       = [];
-        $level1_ids = [];
-        $level2_ids = [];
-        foreach ($this->container->get(UserDAO::class)->getMemberListByParentIds([$member_id]) as $user) {
-            /** @var User $user */
-            $list[]       = [
+        $list = [];
+        $users = Db::select("SELECT id, nickname, phone FROM (SELECT t1.id, t1.nickname, t1.phone, IF ( FIND_IN_SET(parent_id, @pids) > 0, @pids := CONCAT(@pids, ',', id),0 ) AS ischild FROM( SELECT * FROM `user` AS t ORDER BY t.id ASC ) t1, (SELECT @pids := ?) t2 ) t3 WHERE ischild != 0",[$member_id]);  //  返回array
+
+        foreach($users as $user){
+            $list[] = [
                 'id'       => $user->id,
                 'nickname' => $user->nickname,
                 'phone'    => $user->phone,
-                'level'    => 1
+                'level'    => 0
             ];
-            $level1_ids[] = $user->id;
-        }
-
-        // 二级成员
-        if (count($level1_ids) > 0) {
-            foreach ($this->container->get(UserDAO::class)->getMemberListByParentIds($level1_ids) as $user) {
-                /** @var User $user */
-                $list[]       = [
-                    'id'       => $user->id,
-                    'nickname' => $user->nickname,
-                    'phone'    => $user->phone,
-                    'level'    => 2
-                ];
-                $level2_ids[] = $user->id;
-            }
-        }
-
-        // 三级成员
-        if (count($level2_ids) > 0) {
-            foreach ($this->container->get(UserDAO::class)->getMemberListByParentIds($level2_ids) as $user) {
-                /** @var User $user */
-                $list[] = [
-                    'id'       => $user->id,
-                    'nickname' => $user->nickname,
-                    'phone'    => $user->phone,
-                    'level'    => 3
-                ];
-            }
         }
 
         return $list;

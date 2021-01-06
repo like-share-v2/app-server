@@ -2,9 +2,9 @@
 
 declare (strict_types=1);
 /**
- * @copyright 
+ * @copyright
  * @version 1.0.0
- * @link  
+ * @link
  */
 
 namespace App\Service\Dao;
@@ -146,7 +146,7 @@ class UserDAO extends Base
      *
      * @param array $parent_ids
      *
-     * @return Builder[]|Collection
+     * @return \Hyperf\Utils\Collection
      */
     public function getMemberListByParentIds(array $parent_ids)
     {
