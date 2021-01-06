@@ -99,4 +99,40 @@ class YZPay
         $ciphertext     = base64_encode($pk . $hmac . $ciphertext_raw);
         return $ciphertext;
     }
+
+    /**
+     * 解密数据
+     *
+     * @param $e
+     * @param $k
+     * @param $iv
+     *
+     * @return string
+     */
+    public function dec($e, $k, $iv)
+    {
+        try {
+            $c     = base64_decode($e);
+            $ivlen = openssl_cipher_iv_length($cipher = "AES-128-CBC");
+            $iv2   = substr($c, 0, $ivlen);
+            if ($iv2 != $iv) {
+                return "Sign error";
+            }
+            else {
+                $hmac               = substr($c, $ivlen, $sha2len = 32);
+                $ciphertext_raw     = substr($c, $ivlen + $sha2len);
+                $original_plaintext = openssl_decrypt($ciphertext_raw, $cipher, $k, $options = OPENSSL_RAW_DATA, $iv);
+                $calcmac            = hash_hmac('sha256', $ciphertext_raw, $k, $as_binary = true);
+                if (hash_equals($hmac, $calcmac)) {
+                    return base64_decode($original_plaintext);
+                }
+                else {
+                    throw new LogicException('Sign error');
+                }
+            }
+        }
+        catch (\Exception $e) {
+            throw new LogicException('Sign error');
+        }
+    }
 }

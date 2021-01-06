@@ -6,6 +6,7 @@ namespace App\Controller\v1;
 
 use App\Controller\AbstractController;
 use App\Kernel\Payment\JasonBagPay;
+use App\Kernel\Payment\YZPay;
 use App\Service\NotifyService;
 
 use Hyperf\HttpServer\Annotation\AutoController;
@@ -99,7 +100,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['pay_result']) {
@@ -132,7 +133,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['result']) {
@@ -166,7 +167,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['returncode']) {
@@ -195,7 +196,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['callbacks']) {
@@ -223,7 +224,7 @@ class NotifyController extends AbstractController
         if (!isset($params['result']) || !isset($params['spbillno'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['result']) {
@@ -256,7 +257,7 @@ class NotifyController extends AbstractController
         if (!isset($params['out_trade_no']) || !isset($params['rtn_code'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['rtn_code']) {
@@ -288,7 +289,7 @@ class NotifyController extends AbstractController
         if (!isset($params['code']) || !isset($params['out_trade_no'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['code']) {
@@ -320,7 +321,7 @@ class NotifyController extends AbstractController
         if (!isset($params['returncode']) || !isset($params['merissuingcode'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['returncode']) {
@@ -352,7 +353,7 @@ class NotifyController extends AbstractController
         if (!isset($params['outTradeNo']) || !isset($params['status'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['status']) {
@@ -384,7 +385,7 @@ class NotifyController extends AbstractController
         if (!isset($params['orderNo']) || !isset($params['payStatus'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ((int)$params['payStatus']) {
@@ -412,7 +413,7 @@ class NotifyController extends AbstractController
         if (!isset($params['orderNo']) || !isset($params['status'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['status']) {
@@ -445,7 +446,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['status']) {
@@ -477,7 +478,7 @@ class NotifyController extends AbstractController
         if (!isset($params['orderId']) || !isset($params['status'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['status']) {
@@ -509,7 +510,7 @@ class NotifyController extends AbstractController
         if (!isset($params['out_trade_no']) || !isset($params['trade_state'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['trade_state']) {
@@ -541,7 +542,7 @@ class NotifyController extends AbstractController
         if (!isset($params['out_trade_no']) || !isset($params['result_code'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['result_code']) {
@@ -574,7 +575,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['returncode']) {
@@ -602,7 +603,7 @@ class NotifyController extends AbstractController
         if (!isset($params['returncode']) || !isset($params['merissuingcode'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['returncode']) {
@@ -634,7 +635,7 @@ class NotifyController extends AbstractController
         if (!isset($params['orderId']) || !isset($params['status'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ((int)$params['status']) {
@@ -666,7 +667,7 @@ class NotifyController extends AbstractController
         if (!isset($params['orderId']) || !isset($params['status'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['status']) {
@@ -698,7 +699,7 @@ class NotifyController extends AbstractController
         if (!isset($params['orderNo']) || !isset($params['status'])) {
             return 'fail';
         }
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
         if ($this->container->get(JasonBagPay::class)->getSign($params, env('JASON_BAG_PAY_KEY')) !== $params['sign']) {
             return 'sign error';
         }
@@ -764,7 +765,7 @@ class NotifyController extends AbstractController
             return 'fail';
         }
 
-        $this->logger('payment')->error(Json::encode($params));
+        $this->logger('payment')->info(Json::encode($params));
 
         try {
             switch ($params['tradeResult']) {
@@ -815,15 +816,18 @@ class NotifyController extends AbstractController
     public function yz_pay()
     {
         $params = $this->request->all();
-        if (!isset($params['tradeResult']) || !isset($params['mchOrderNo'])) {
-            return 'fail';
+        $this->logger('payment')->info(Json::encode($params));
+        try {
+            $params = $this->container->get(YZPay::class)->dec($params['encrypted'], env('YZ_PAY_SECRET_KEY'), env('YZ_PAY_PRODUCT_KEY'));
+            $params = Json::decode($params, true);
+        }
+        catch (\Throwable $e) {
+            return $e->getMessage();
         }
 
-        $this->logger('payment')->error(Json::encode($params));
-
         try {
-            switch ($params['tradeResult']) {
-                case '1': // 支付成功
+            switch ((int)$params['status']) {
+                case 1: // 支付成功
                     $status = 2;
                     break;
 
@@ -831,7 +835,7 @@ class NotifyController extends AbstractController
                     $status = 3;
                     break;
             }
-            $this->container->get(NotifyService::class)->handle($params['mchOrderNo'], $status, $params['orderNo'] ?? '', $params['merRetMsg'] ?? 'success');
+            $this->container->get(NotifyService::class)->handle($params['client_trans_id'], $status, $params['vendor_trans_id'] ?? '');
         }
         catch (\Exception $e) {
             $this->logger('payment')->error($e->getMessage(), $params);
@@ -844,12 +848,17 @@ class NotifyController extends AbstractController
     public function yz_payout()
     {
         $params = $this->request->all();
-        if (!isset($params['tradeResult']) || !isset($params['merTransferId'])) {
-            return 'fail';
+        $this->logger('payment')->info(Json::encode($params));
+        try {
+            $params = $this->container->get(YZPay::class)->dec($params['encrypted'], env('YZ_PAY_SECRET_KEY'), env('YZ_PAY_PRODUCT_KEY'));
+            $params = Json::decode($params, true);
+        }
+        catch (\Throwable $e) {
+            return $e->getMessage();
         }
         try {
-            switch ($params['tradeResult']) {
-                case '1': // 支付成功
+            switch ((int)$params['status']) {
+                case 1: // 支付成功
                     $status = 2;
                     break;
 
@@ -857,7 +866,7 @@ class NotifyController extends AbstractController
                     $status = 1;
                     break;
             }
-            $this->container->get(NotifyService::class)->handlePayout($params['merTransferId'], $status, (float)$params['transferAmount']);
+            $this->container->get(NotifyService::class)->handlePayout($params['client_trans_id'], $status, (float)$params['amount']);
         }
         catch (\Exception $e) {
             $this->logger('payment')->error($e->getMessage(), $params);
