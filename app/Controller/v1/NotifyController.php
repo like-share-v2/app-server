@@ -570,7 +570,7 @@ class NotifyController extends AbstractController
     public function yt2pay()
     {
         $params = $this->request->all();
-        if (!isset($params['returncode']) || !isset($params['terraceordercode'])) {
+        if (!isset($params['returncode']) || !isset($params['merordercode'])) {
             return 'fail';
         }
 
@@ -586,7 +586,7 @@ class NotifyController extends AbstractController
                     $status = 3;
                     break;
             }
-            $this->container->get(NotifyService::class)->handle($params['terraceordercode'], $status, $params['merordercode'] ?? '', 'success');
+            $this->container->get(NotifyService::class)->handle($params['merordercode'], $status, $params['terraceordercode'] ?? '', 'success');
         }
         catch (\Exception $e) {
             $this->logger('payment')->info($e->getMessage(), $params);
