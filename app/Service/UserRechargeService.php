@@ -25,6 +25,7 @@ use App\Kernel\Payment\ShineUPay;
 use App\Kernel\Payment\StepPay;
 use App\Kernel\Payment\YT2Pay;
 use App\Kernel\Payment\YTPay;
+use App\Kernel\Payment\YZPay;
 use App\Kernel\Payment\ZowPay;
 use App\Kernel\Utils\JwtInstance;
 use App\Model\User;
@@ -509,6 +510,14 @@ class UserRechargeService extends Base
 
                 case 'SeproPay':
                     $result = $this->container->get(SeproPay::class)->pay($payment->pay_no, $amount);
+                    break;
+
+                case 'YZPay':
+                    $result = $this->container->get(YZPay::class)->pay($payment->pay_no, $amount, [
+                        'name'  => $user->nickname,
+                        'phone' => $user->phone,
+                        'email' => $user->email ?? $user->phone . '@gmail.com'
+                    ]);
                     break;
 
                 default:
