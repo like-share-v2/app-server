@@ -60,7 +60,7 @@ class UploadService extends Base
 
             $uri = $directory . '/' . $prefix . $file_name;
             // 执行上传
-            if (!$this->upload()->writeStream($uri, fopen($tmp_file, 'r+'))) {
+            if (!$this->upload(env('FILE_DRIVER', 'oss'))->writeStream($uri, fopen($tmp_file, 'r+'))) {
                 throw new LogicException('logic.UPLOAD_FAIL');
             }
         }
