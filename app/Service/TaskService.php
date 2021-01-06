@@ -2,14 +2,15 @@
 
 declare (strict_types=1);
 /**
- * @copyright 
+ * @copyright
  * @version 1.0.0
- * @link  
+ * @link
  */
 
 namespace App\Service;
 
 use App\Common\Base;
+use App\Exception\LogicException;
 use App\Kernel\Utils\JwtInstance;
 use App\Service\Dao\TaskAuditDAO;
 use App\Service\Dao\TaskCategoryDAO;
@@ -18,7 +19,7 @@ use App\Service\Dao\UserBillDAO;
 use App\Service\Dao\UserLevelDAO;
 use App\Service\Dao\UserMemberDAO;
 use App\Service\Dao\UserTaskDAO;
-use Hyperf\Cache\Listener\DeleteListenerEvent;
+
 use Hyperf\DbConnection\Db;
 
 /**
@@ -33,32 +34,23 @@ class TaskService extends Base
      * 领取任务
      *
      * @param int $task_id
+     *
+     * @return mixed
      */
     public function receive(int $task_id)
     {
         $user = JwtInstance::instance()->build()->getUser();
-
-        // 获取任务
-        $task = $this->container->get(TaskDAO::class)->findById($task_id);
-
         // 判断任务是否存在
-        if (!$task) {
+        if (!$task = $this->container->get(TaskDAO::class)->findById($task_id)) {
             $this->error('logic.TASK_NOT_FOUND');
         }
-
-        // 判断会员等级是否过期
-        /* if ($user->getAttributes()['effective_time'] < time()) {
-            $this->error('logic.MEMBER_EXPIRED');
-        } */
-
-        // 判断会员等级
-        /* if ($user->level !== $task->level) {
-            $this->error('logic.USER_LEVEL_NOT_REACH_TASK_LEVEL');
-        } */
+        // 判断状态
+        if ($task->status !== 1) {
+            $this->error('logic.TASK_STATUS_ERROR');
+        }
 
         // 判断会员等级
-        $user_member = $this->container->get(UserMemberDAO::class)->firstByUserIdLevel($user->id, $task->level);
-        if (!$user_member) {
+        if (!$user_member = $this->container->get(UserMemberDAO::class)->firstByUserIdLevel($user->id, $task->level)) {
             $this->error('logic.USER_LEVEL_NOT_REACH_TASK_LEVEL');
         }
 
@@ -77,59 +69,46 @@ class TaskService extends Base
             $this->error('logic.TASK_INSUFFICIENT_CREDIT_SCORE');
         }
 
-        // 判断会员等级今日领取限制
-        $user_today_task_count = $this->container->get(UserTaskDAO::class)->getUserTodayTaskCountByLevel($user->id,$task->level);
-        $user_level = $this->container->get(UserLevelDAO::class)->findByLevel($task->level);
-        if ($user_today_task_count >= $user_level->task_num) {
-            $this->error('logic.TODAY_TASKS_REACHED_LIMIT');
-        }
-
-        // 判断状态
-        if ($task->status !== 1) {
-            $this->error('logic.TASK_STATUS_ERROR');
-        }
-
-        $task_num = $this->container->get(UserTaskDAO::class)->getTaskCount($task_id);
-
         // 判断剩余数量
+        $task_num = $this->container->get(UserTaskDAO::class)->getTaskCount($task_id);
         if ($task->num <= $task_num) {
             $this->error('logic.TASK_SHORTAGE_IN_NUMBER');
         }
 
         // 加锁
         $key = sprintf('TaskLock:%d', $user->id);
-        if (!$this->redis->setnx(sprintf('TaskLock:%d', $user->id), true)){
+        if (!$this->redis->setnx(sprintf('TaskLock:%d', $user->id), '1')) {
             $this->error('logic.SERVER_ERROR');
         }
         if (!$setExpire = $this->redis->expire($key, 5)) {
             $this->error('logic.SERVER_ERROR');
         }
-        Db::beginTransaction();
-        try {
-            if ($this->container->get(UserTaskDAO::class)->checkUserTaskExisted($user->id, $task_id)) {
-                $this->error('logic.USER_RECEIVED_TASK');
-            }
 
-            // 创建用户领取任务记录
-            $result = $this->container->get(UserTaskDAO::class)->create([
-                'user_id' => $user->id,
-                'task_id' => $task_id,
-                'status' => 0,
-                'amount' => $task->amount
-            ]);
-
-            Db::commit();
-        } catch (\Exception $e) {
-            Db::rollBack();
-            $this->logger('task')->error($e->getMessage());
-            $this->redis->del($key);
-            $this->error('logic.SERVER_ERROR');
+        // 判断会员等级今日领取限制
+        $user_today_task_count = $this->container->get(UserTaskDAO::class)->getUserTodayTaskCountByLevel($user->id, $task->level);
+        $user_level            = $this->container->get(UserLevelDAO::class)->findByLevel($task->level);
+        if ($user_today_task_count >= $user_level->task_num) {
+            $this->error('logic.TODAY_TASKS_REACHED_LIMIT');
         }
+
+        if ($this->container->get(UserTaskDAO::class)->checkUserTaskExisted($user->id, $task_id)) {
+            $this->error('logic.USER_RECEIVED_TASK');
+        }
+
+        // 创建用户领取任务记录
+        $result = $this->container->get(UserTaskDAO::class)->create([
+            'user_id' => $user->id,
+            'task_id' => $task_id,
+            'status'  => 0,
+            'amount'  => $task->amount
+        ]);
 
         $this->redis->del($key);
 
         // 领取任务清除缓存
-        $this->flushCache('user_received_ids_update', [$user->id]);
+        $this->flushCache('user_received_ids_update', [
+            'user_id' => $user->id
+        ]);
 
         return $result;
     }
@@ -164,7 +143,7 @@ class TaskService extends Base
         }
 
         // 修改任务状态
-        $user_task->status = 4;
+        $user_task->status      = 4;
         $user_task->cancel_time = time();
         $user_task->save();
 
@@ -175,7 +154,7 @@ class TaskService extends Base
     /**
      * 提交任务
      *
-     * @param int $user_task_id
+     * @param int    $user_task_id
      * @param string $image
      */
     public function submit(int $user_task_id, string $image)
@@ -194,8 +173,8 @@ class TaskService extends Base
             $this->error('logic.USER_TASK_STATUS_ERROR');
         }
 
-        $user_task->status = 1;
-        $user_task->image = $image;
+        $user_task->status      = 1;
+        $user_task->image       = $image;
         $user_task->submit_time = time();
         $user_task->save();
     }
@@ -204,6 +183,7 @@ class TaskService extends Base
      * 获取用户任务列表
      *
      * @param int $type
+     *
      * @return mixed
      */
     public function getUserTaskList(int $type)
@@ -254,7 +234,7 @@ class TaskService extends Base
         }
 
         // 检查用户余额
-        $user = JwtInstance::instance()->build()->getUser();
+        $user          = JwtInstance::instance()->build()->getUser();
         $create_amount = (float)$params['amount'] * (int)$params['num'];
 
         // 用户余额不足
@@ -266,11 +246,11 @@ class TaskService extends Base
         try {
             // 创建用户账单
             $this->container->get(UserBillDAO::class)->create([
-                'user_id' => $user->id,
-                'type' => 9,
-                'balance' => - $create_amount,
+                'user_id'        => $user->id,
+                'type'           => 9,
+                'balance'        => -$create_amount,
                 'before_balance' => $user->balance,
-                'after_balance' => $user->balance - $create_amount
+                'after_balance'  => $user->balance - $create_amount
             ]);
 
             // 扣除用户余额
@@ -278,18 +258,19 @@ class TaskService extends Base
 
             // 创建审核任务
             $this->container->get(TaskAuditDAO::class)->create([
-                'user_id' => $user->id,
+                'user_id'     => $user->id,
                 'category_id' => (int)$params['category_id'],
-                'level' => (int)$params['level'],
-                'title' => trim($params['title']),
+                'level'       => (int)$params['level'],
+                'title'       => trim($params['title']),
                 'description' => trim($params['description']),
-                'url' => trim($params['url']),
-                'amount' => (float)$params['amount'],
-                'num' => (int)$params['num']
+                'url'         => trim($params['url']),
+                'amount'      => (float)$params['amount'],
+                'num'         => (int)$params['num']
             ]);
 
             Db::commit();
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             Db::rollBack();
             $this->logger('task')->error($e->getMessage());
             $this->error('logic.SERVER_ERROR');
