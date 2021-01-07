@@ -33,7 +33,8 @@ class SettingController extends AbstractController
             'enableRobotAutoSubmit' => getConfig('isEnableRobotAutoSubmit', false),
             'robotPopupContent'     => getConfig('robotPopupContent', ''),
             'appDownloadUrl'        => getConfig('app_download_url', ''),
-            'firstLoadImageUrl'     => getConfig('firstLoadImageUrl', '')
+            'firstLoadImageUrl'     => getConfig('firstLoadImageUrl', ''),
+            'enable_register_sms'   => getConfig('enable_register_sms', false)
         ]);
     }
 }
