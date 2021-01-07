@@ -1,14 +1,15 @@
 <?php
 declare (strict_types=1);
 /**
- * @copyright 
+ * @copyright
  * @version   1.0.0
- * @link       
+ * @link
  */
 
 namespace App\Service;
 
 use App\Common\Base;
+use App\Exception\LogicException;
 use App\Kernel\SMS\SMSFactory;
 
 use Carbon\Carbon;
@@ -119,24 +120,79 @@ class SMSService extends Base
     {
         $guzzle = $this->guzzle->create();
         try {
-            $date     = Carbon::now('Asia/Shanghai')->addSeconds(30 * 60)->format('YmdHis');
-            $response = $guzzle->get('http://sms.skylinelabs.cc:20003/sendsmsV2', [
-                'query' => [
-                    'version'  => '1.0',
-                    'account'  => env('TH_SMS_ACCOUNT'),
-                    'datetime' => $date,
-                    'numbers'  => $phoneNumber,
-                    'content'  => $content,
-                    'sign'     => md5(env('TH_SMS_ACCOUNT') . env('TH_SMS_PASSWORD') . $date)
-                ]
-            ]);
-            if ($response->getStatusCode() !== 200) {
-                throw new SMSException(sprintf('Response status code is abnormal: %s', $response->getStatusCode()));
-            }
-            $responseContents = $response->getBody()->getContents();
-            $result           = Json::decode($responseContents, true);
-            if (!isset($result['status']) || (int)$result['status'] !== 0) {
-                throw new SMSException(sprintf('SMS failed to send, return result: %s', $responseContents));
+            switch (getConfig('SMSChannel', 'skylinelabs')) {
+                case 'skylinelabs':
+                    $th_account  = getConfig('SMSThAccount', env('TH_SMS_ACCOUNT'));
+                    $th_password = getConfig('SMSThPassword', env('TH_SMS_PASSWORD'));
+                    $date        = Carbon::now('Asia/Shanghai')->addSeconds(30 * 60)->format('YmdHis');
+                    $response    = $guzzle->get('http://sms.skylinelabs.cc:20003/sendsmsV2', [
+                        'query' => [
+                            'version'  => '1.0',
+                            'account'  => $th_account,
+                            'datetime' => $date,
+                            'numbers'  => $phoneNumber,
+                            'content'  => $content,
+                            'sign'     => md5($th_account . $th_password . $date)
+                        ]
+                    ]);
+                    if ($response->getStatusCode() !== 200) {
+                        throw new SMSException(sprintf('Response status code is abnormal: %s', $response->getStatusCode()));
+                    }
+                    $responseContents = $response->getBody()->getContents();
+                    $result           = Json::decode($responseContents, true);
+                    if (!isset($result['status']) || (int)$result['status'] !== 0) {
+                        throw new SMSException(sprintf('SMS failed to send, return result: %s', $responseContents));
+                    }
+                    break;
+
+                case 'chuanglan':
+                    $response = $guzzle->get('https://intapi.253.com/send/json', [
+                        'json' => [
+                            'account'  => getConfig('SMSchuanglanAccount', env('CHUANGLAN_ACCOUNT')),
+                            'password' => getConfig('SMSchuanglanPassword', env('CHUANGLAN_PASSWORD')),
+                            'mobile'   => $phoneNumber,
+                            'msg'      => $content,
+                        ]
+                    ]);
+                    if ($response->getStatusCode() !== 200) {
+                        throw new SMSException(sprintf('Response status code is abnormal: %s', $response->getStatusCode()));
+                    }
+                    $responseContents = $response->getBody()->getContents();
+                    $result           = Json::decode($responseContents, true);
+                    if (!isset($result['code']) || (int)$result['code'] !== 0) {
+                        throw new SMSException(sprintf('SMS failed to send, return result: %s', $responseContents));
+                    }
+                    break;
+
+                case 'chuanxin':
+                    $appkey    = getConfig('SMSChuangxinAppkey');
+                    $appsecret = getConfig('SMSChuangxinAppsecret');
+                    $appcode   = getConfig('SMSChuangxinAppcode');
+                    $response  = $guzzle->get('http://47.242.85.7:9090/sms/batch/v2', [
+                        'headers' => [
+                            'Content-Type' => 'application/json; charset=utf-8'
+                        ],
+                        'query'   => [
+                            'appkey'    => $appkey,
+                            'appcode'   => $appcode,
+                            'appsecret' => $appsecret,
+                            'sign'      => md5($appkey . $appsecret . time()),
+                            'phone'     => $phoneNumber,
+                            'msg'       => $content,
+                        ]
+                    ]);
+                    if ($response->getStatusCode() !== 200) {
+                        throw new SMSException(sprintf('Response status code is abnormal: %s', $response->getStatusCode()));
+                    }
+                    $responseContents = $response->getBody()->getContents();
+                    $result           = Json::decode($responseContents, true);
+                    if (!isset($result['code']) || $result['code'] !== '00000') {
+                        throw new SMSException(sprintf('SMS failed to send, return result: %s', $responseContents));
+                    }
+                    break;
+
+                default:
+                    throw new LogicException('SMS failed to send');
             }
             return $result;
         }
