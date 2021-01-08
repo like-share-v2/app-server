@@ -26,6 +26,7 @@ use App\Kernel\Payment\StepPay;
 use App\Kernel\Payment\YT2Pay;
 use App\Kernel\Payment\YTPay;
 use App\Kernel\Payment\YZPay;
+use App\Kernel\Payment\ZFPay;
 use App\Kernel\Payment\ZowPay;
 use App\Kernel\Utils\JwtInstance;
 use App\Model\User;
@@ -518,6 +519,10 @@ class UserRechargeService extends Base
                         'phone' => $user->phone,
                         'email' => $user->email ?? $user->phone . '@gmail.com'
                     ]);
+                    break;
+
+                case 'ZFPay':
+                    $result = $this->container->get(ZFPay::class)->pay($payment->pay_no, $amount);
                     break;
 
                 default:
