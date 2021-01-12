@@ -258,20 +258,20 @@ class UserRechargeService extends Base
             if ($findLevel = $this->container->get(UserMemberDAO::class)->firstByUserIdLevel($user->id, $user_level->level)) {
                 // 判断是否已过期
                 if ($findLevel->effective_time < time()) {
-                    $findLevel->effective_time = time() + $user_level->duration;
-                    $findLevel->save();
+                    $findLevel->effective_time = strtotime(date('Y-m-d',time() + $user_level->duration));
                 }
                 else {
                     // 累加会员时长
-                    $findLevel->increment('effective_time', $user_level->duration);
+                    $findLevel->effective_time = strtotime(date('Y-m-d',$findLevel->effective_time + $user_level->duration));
                 }
+                $findLevel->save();
             }
             else {
                 // 添加用户开通等级
                 $this->container->get(UserMemberDAO::class)->create([
                     'user_id'        => $user->id,
                     'level'          => $user_level->level,
-                    'effective_time' => time() + $user_level->duration
+                    'effective_time' => strtotime(date('Y-m-d', time() + $user_level->duration))
                 ]);
             }
 
