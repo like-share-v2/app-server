@@ -59,7 +59,7 @@ class GiveAwayVIP extends AbstractListener implements ListenerInterface
             $this->container->get(UserMemberDAO::class)->create([
                 'user_id'        => $user->id,
                 'level'          => $level->level,
-                'effective_time' => $duration <= 0 ? -1 : strtotime(date('Y-m-d',time() + $duration))
+                'effective_time' => $duration <= 0 ? -1 : strtotime(date('Y-m-d',time() + $duration)) - 1
             ]);
         }
     }
