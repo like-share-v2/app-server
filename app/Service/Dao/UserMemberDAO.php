@@ -64,4 +64,15 @@ class UserMemberDAO extends Base
     {
         return UserMember::query()->with(['userLevel'])->where('user_id', $user_id)->get();
     }
+
+    /**
+     * @param int $user_id
+     * @param int $level
+     *
+     * @return false|int|mixed
+     */
+    public function deleteMember(int $user_id, int $level)
+    {
+        return UserMember::where('user_id', $user_id)->where('level', $level)->delete();
+    }
 }

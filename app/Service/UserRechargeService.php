@@ -222,12 +222,12 @@ class UserRechargeService extends Base
         }
 
         // 判断最大购买次数
-        if ($user_level->max_buy_num > 0) {
-            // 获取用户购买次数
-            if ($buyNum = $this->container->get(UserLevelBuyNumDAO::class)->get($user->id, $user_level->level) >= $user_level->max_buy_num) {
-                $this->error('logic.MEMBER_BUY_NUM_LIMIT');
-            }
-        }
+        // if ($user_level->max_buy_num > 0) {
+        //     // 获取用户购买次数
+        //     if ($buyNum = $this->container->get(UserLevelBuyNumDAO::class)->get($user->id, $user_level->level) >= $user_level->max_buy_num) {
+        //         $this->error('logic.MEMBER_BUY_NUM_LIMIT');
+        //     }
+        // }
 
         Db::beginTransaction();
         try {
@@ -255,25 +255,41 @@ class UserRechargeService extends Base
             ]);
 
             // 取当前已开通的对应等级
+            // if ($findLevel = $this->container->get(UserMemberDAO::class)->firstByUserIdLevel($user->id, $user_level->level)) {
+            //     // 判断是否已过期
+            //     if ($findLevel->effective_time < time()) {
+            //         $findLevel->effective_time = strtotime(date('Y-m-d',time() + $user_level->duration)) - 1;
+            //     }
+            //     else {
+            //         // 累加会员时长
+            //         $findLevel->effective_time = strtotime(date('Y-m-d',$findLevel->effective_time + $user_level->duration)) - 1;
+            //     }
+            //     $findLevel->save();
+            // }
+            // else {
+            //     // 添加用户开通等级
+            //     $this->container->get(UserMemberDAO::class)->create([
+            //         'user_id'        => $user->id,
+            //         'level'          => $user_level->level,
+            //         'effective_time' => strtotime(date('Y-m-d', time() + $user_level->duration)) - 1
+            //     ]);
+            // }
+
+            // 取当前已开通的对应等级
             if ($findLevel = $this->container->get(UserMemberDAO::class)->firstByUserIdLevel($user->id, $user_level->level)) {
-                // 判断是否已过期
-                if ($findLevel->effective_time < time()) {
-                    $findLevel->effective_time = strtotime(date('Y-m-d',time() + $user_level->duration)) - 1;
+                // 未过期，不允许重复开通
+                if ($findLevel->getRaw('effective_time') > time()) {
+                    throw new LogicException('logic.MEMBER_BUY_NUM_LIMIT');
                 }
-                else {
-                    // 累加会员时长
-                    $findLevel->effective_time = strtotime(date('Y-m-d',$findLevel->effective_time + $user_level->duration)) - 1;
-                }
-                $findLevel->save();
             }
-            else {
-                // 添加用户开通等级
-                $this->container->get(UserMemberDAO::class)->create([
-                    'user_id'        => $user->id,
-                    'level'          => $user_level->level,
-                    'effective_time' => strtotime(date('Y-m-d', time() + $user_level->duration)) - 1
-                ]);
-            }
+            // 删除之前的会员
+            $this->container->get(UserMemberDAO::class)->deleteMember($user->id, $user_level->level);
+            // 开通会员
+            $this->container->get(UserMemberDAO::class)->create([
+                'user_id'        => $user->id,
+                'level'          => $user_level->level,
+                'effective_time' => strtotime(date('Y-m-d', time() + $user_level->duration)) - 1
+            ]);
 
             // 增加购买次数
             $this->container->get(UserLevelBuyNumDAO::class)->update($user->id, $user_level->level);
@@ -282,11 +298,6 @@ class UserRechargeService extends Base
             if (!$this->container->get(UserRechargeDAO::class)->checkUserRechargeLevel($user->id, $user_level->level)) {
                 // 首次充值上级返利
                 $this->addRechargeRebate($user, $user_level->level);
-            }
-
-            // 判断用户是否充值过
-            if ($this->container->get(UserRechargeDAO::class)->checkUserLastTenSecondRecharge($user->id, $user_level->level)) {
-                throw new \Exception('重复充值');
             }
 
             // 添加用户充值记录
@@ -322,6 +333,10 @@ class UserRechargeService extends Base
             UserNotifyContent::query()->insert($notify_save_data);
 
             Db::commit();
+        }
+        catch (LogicException $e) {
+            Db::rollBack();
+            $this->error($e->getMessage());
         }
         catch (\Exception $e) {
             Db::rollBack();
