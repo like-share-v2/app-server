@@ -49,6 +49,7 @@ use App\Service\Dao\UserRechargeDAO;
 
 use Hyperf\Cache\Listener\DeleteListenerEvent;
 use Hyperf\DbConnection\Db;
+use Hyperf\Snowflake\IdGeneratorInterface;
 
 /**
  * 用户充值服务
@@ -431,7 +432,7 @@ class UserRechargeService extends Base
             // 创建支付记录
             $payment = $this->container->get(PaymentDAO::class)->create([
                 'user_id' => $user->id,
-                'pay_no'  => 'recharge' . $date . mt_rand(10000, 99999) . $user->id,
+                'pay_no'  => (string)$this->container->get(IdGeneratorInterface::class)->generate(),
                 'amount'  => $amount,
                 'type'    => 1,
                 'channel' => $channel,
