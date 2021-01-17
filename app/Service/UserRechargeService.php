@@ -20,6 +20,7 @@ use App\Kernel\Payment\IPayIndia;
 use App\Kernel\Payment\JasonBagPay;
 use App\Kernel\Payment\LinkPay;
 use App\Kernel\Payment\PopModePay;
+use App\Kernel\Payment\RunningPay;
 use App\Kernel\Payment\SeproPay;
 use App\Kernel\Payment\ShineUPay;
 use App\Kernel\Payment\StepPay;
@@ -538,6 +539,10 @@ class UserRechargeService extends Base
 
                 case 'ZFPay':
                     $result = $this->container->get(ZFPay::class)->pay($payment->pay_no, $amount);
+                    break;
+
+                case 'RunningPay':
+                    $result = $this->container->get(RunningPay::class)->pay($payment->pay_no, $amount);
                     break;
 
                 default:
