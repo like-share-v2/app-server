@@ -52,7 +52,7 @@ class RunningPay
     public function pay(string $pay_no, float $amount, array $extra = [])
     {
         $amount     = number_format($amount, 2, '.', '');
-        $merchantId = '999';
+        $merchantId = '10091';
         $params     = [
             'merchantId'      => $merchantId,
             'merchantOrderId' => $pay_no,
@@ -61,7 +61,7 @@ class RunningPay
             'payType'         => 1,
             'notifyUrl'       => config('app_host') . 'v1/notify/running_pay',
             'remark'          => 'recharge',
-            'sign'            => md5('merchantId=' . $merchantId . '&merchantOrderId=' . $pay_no . '&amount=' . $amount . '&abc#123!')
+            'sign'            => md5('merchantId=' . $merchantId . '&merchantOrderId=' . $pay_no . '&amount=' . $amount . '&orjrFAkYFTPjcCBS')
         ];
         $request    = $this->guzzle->create()->post(self::BASE_URL . 'rpay-api/order/submit', [
             'headers' => [
