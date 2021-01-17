@@ -950,4 +950,29 @@ class NotifyController extends AbstractController
 
         return 'success';
     }
+
+    public function running_payout()
+    {
+        $params = Json::decode($this->request->getBody()->getContents(), true);
+        $this->logger('payment')->info(Json::encode($params));
+
+        try {
+            switch ((int)$params['status']) {
+                case 1: // 支付成功
+                    $status = 2;
+                    break;
+
+                default: // 支付失败
+                    $status = 1;
+                    break;
+            }
+            $this->container->get(NotifyService::class)->handlePayout($params['merchantOrderId'], $status, (float)$params['amount']);
+        }
+        catch (\Exception $e) {
+            $this->logger('payment')->error($e->getMessage(), $params);
+            return $e->getMessage();
+        }
+
+        return 'success';
+    }
 }
