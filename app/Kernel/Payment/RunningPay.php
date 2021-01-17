@@ -71,7 +71,7 @@ class RunningPay
         ]);
         $data       = Json::decode($request->getBody()->getContents(), true);
         if (($data['code'] ?? '') != 0) {
-            throw new LogicException($data['error']);
+            throw new LogicException($pay_no . ':' . $data['error']);
         }
 
         return [
