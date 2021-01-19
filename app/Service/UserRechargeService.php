@@ -11,6 +11,7 @@ namespace App\Service;
 
 use App\Common\Base;
 use App\Exception\LogicException;
+use App\Kernel\Payment\CustomPay;
 use App\Kernel\Payment\DSEDPay;
 use App\Kernel\Payment\GagaPay;
 use App\Kernel\Payment\HaodaMallPay;
@@ -544,6 +545,14 @@ class UserRechargeService extends Base
 
                 case 'RunningPay':
                     $result = $this->container->get(RunningPay::class)->pay($payment->pay_no, $amount);
+                    break;
+
+                case 'CustomPay':
+                    $result = $this->container->get(CustomPay::class)->pay($payment->pay_no, $amount, [
+                        'name'  => $user->nickname,
+                        'phone' => $user->phone,
+                        'email' => $user->email ?? $user->phone . '@gmail.com'
+                    ]);
                     break;
 
                 default:

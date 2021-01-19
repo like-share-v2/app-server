@@ -975,4 +975,50 @@ class NotifyController extends AbstractController
 
         return 'success';
     }
+
+    public function custom_pay()
+    {
+        $params = $this->request->all();
+        try {
+            switch ($params['returncode']) {
+                case '00': // 支付成功
+                    $status = 2;
+                    break;
+
+                default:
+                    $status = 3;
+                    break;
+            }
+            $this->container->get(NotifyService::class)->handle($params['orderid'], $status, '');
+        }
+        catch (\Exception $e) {
+            $this->logger('payment')->error($e->getMessage(), $params);
+            return $e->getMessage();
+        }
+
+        return 'OK';
+    }
+
+    public function custom_payout()
+    {
+        $params = $this->request->all();
+        try {
+            switch ($params['status']) {
+                case 'success': // 支付成功
+                    $status = 2;
+                    break;
+
+                default: // 支付失败
+                    $status = 1;
+                    break;
+            }
+            $this->container->get(NotifyService::class)->handlePayout($params['out_trade_no'], $status, (float)$params['amount']);
+        }
+        catch (\Exception $e) {
+            $this->logger('payment')->error($e->getMessage(), $params);
+            return $e->getMessage();
+        }
+
+        return 'OK';
+    }
 }
